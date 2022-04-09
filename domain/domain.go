@@ -93,6 +93,7 @@ type MapStore interface {
 	Insert(Map) error
 	Get(mapID string) (Map, error)
 	GetAll() ([]Map, error)
+	Delete(mapID string) error
 }
 
 // Challenge is a list of coordinates of panos.

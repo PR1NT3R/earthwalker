@@ -4,10 +4,9 @@
 
     let allMaps = [];
 
-    function fetchData() {
-        $ewapi.getMaps().then(maps => {
-            allMaps = maps.slice(0, 20);
-        });
+    async function fetchData() {
+        let maps = await $ewapi.getMaps()
+        allMaps =  maps.slice(0, 20);
     }
 </script>
 
@@ -27,7 +26,7 @@
         <div class="container-fluid mb-4">
             <div class="row justify-content-center row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5">
                 {#each allMaps as map}
-                    <MapPreview {map}/>
+                    <MapPreview on:requestReload={fetchData} {map}/>
                 {/each}
             </div>
         </div>

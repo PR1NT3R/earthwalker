@@ -1,7 +1,10 @@
 <script>
-    import { onMount } from "svelte";
+    import { onMount, createEventDispatcher } from "svelte";
     import { ewapi } from "../../js/stores";
     import { showPolygonOnMap } from '../../js/earthwalker';
+
+
+    const dispatch = createEventDispatcher();
 
     export let map;
 
@@ -27,6 +30,13 @@
             lMap.fitBounds(polyGroup.getBounds());
         }
     });
+
+    async function deleteSelf() {
+        // TODO: ask for confirmation to delete
+        let response = await $ewapi.deleteMap(map.MapID);
+        console.log(response);
+        dispatch("requestReload");
+    }
 </script>
 
 <div class="card mt-4 mx-1">
@@ -38,9 +48,17 @@
     <div class="card-body">
         <h5 class="card-title">{map.Name}</h5>
         <p class="card-text">
-            Rounds: {map.NumRounds}<br>
-            {map.TimeLimit > 0 ? `Time limit: ${Math.floor(map.TimeLimit / 60)}:${Math.floor(map.TimeLimit % 60).toString().padStart(2, '0')}` : 'No Time Limit'}<br>
+            Rounds: {map.NumRounds}
+            <br>
+            {map.TimeLimit > 0 ? `Time limit: ${Math.floor(map.TimeLimit / 60)}:${Math.floor(map.TimeLimit % 60).toString().padStart(2, '0')}` : 'No Time Limit'}
         </p>
-        <a href="/createchallenge?mapid={map.MapID}" class="btn btn-primary">Use Map</a>
+    </div>
+    <div class="card-footer">
+        <a href="/createchallenge?mapid={map.MapID}" class="btn btn-primary">
+            Use Map
+        </a>
+        <button class="btn btn-danger" on:click|preventDefault={deleteSelf}>
+            Delete
+        </button>
     </div>
 </div>

@@ -72,7 +72,7 @@
 		{/await}
 	{:else}
 		<nav class="navbar navbar-expand-sm navbar-light bg-light">
-			<span class="navbar-brand">Earthwalker</span>
+			<a class="navbar-brand" href="/">Earthwalker</a>
 			<ul class="navbar-nav">
 				<div class="collapse navbar-collapse">
 					<li class="nav-item active">
