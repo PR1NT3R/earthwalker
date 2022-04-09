@@ -9,6 +9,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.1.0",
     "@rollup/plugin-node-resolve": "^11.2.0",
+    "@rollup/plugin-typescript": "^8.3.1",
     "posthtml": "^0.15.1",
     "posthtml-hash": "^1.2.2",
     "rimraf": "^3.0.2",

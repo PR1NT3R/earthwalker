@@ -81,7 +81,9 @@ type Map struct {
 	Connectedness PanoConnectedness
 	Copyright     PanoCopyright
 	Source        PanoSource
-	ShowLabels    bool // whether to display place labels on the in-game minimap
+	ShowLabels    bool                     // whether to display place labels on the in-game minimap
+	LocStrings    []string                 // location string entered by user (to draw polygons)
+	DrawnPolygons []map[string]interface{} // geoJSON draw by user
 	// TODO: consider adding CreatedAt (datetime) field
 }
 
