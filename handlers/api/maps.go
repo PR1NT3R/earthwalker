@@ -60,6 +60,7 @@ func (handler Maps) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err := handler.MapStore.Delete(mapID)
+		// TODO: delete associated challenges etc. (maybe implement in Store layer?)
 		if err != nil {
 			sendError(w, "failed to delete map from store", http.StatusInternalServerError)
 			log.Printf("Failed to delete map from store: %v\n", err)

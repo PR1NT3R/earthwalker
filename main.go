@@ -70,9 +70,12 @@ func main() {
 		os.Exit(0)
 	}()
 
+	indexStore := &badgerdb.IndexStore{DB: db}
 	mapStore := badgerdb.MapStore{DB: db}
-	challengeStore := badgerdb.ChallengeStore{DB: db}
-	challengeResultStore := badgerdb.ChallengeResultStore{DB: db}
+	challengeStore := badgerdb.ChallengeStore{DB: db, Index: indexStore}
+	challengeResultStore := badgerdb.ChallengeResultStore{
+		DB:    db,
+		Index: indexStore}
 
 	// == HANDLERS ========
 	// API

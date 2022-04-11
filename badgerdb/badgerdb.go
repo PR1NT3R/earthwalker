@@ -3,12 +3,33 @@ package badgerdb
 import (
 	"bytes"
 	"encoding/gob"
-	"errors"
 	"fmt"
 
 	"github.com/dgraph-io/badger"
 	"gitlab.com/glatteis/earthwalker/domain"
 )
+
+// TODO: lots of repetition in this file. Maybe just a Go thing?
+
+// == DB Object Handling ========
+
+// Init opens and returns a badger database connection
+// don't forget to close it
+func Init(path string) (*badger.DB, error) {
+	db, err := badger.Open(badger.DefaultOptions(path))
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+// Close closes the given badger database connection
+// (provided so you don't have to import badger just to do this)
+func Close(db *badger.DB) {
+	db.Close()
+}
+
+// == Utilities ========
 
 // TODO: make store and get more symmetrical?
 func storeStruct(db *badger.DB, key string, t interface{}) error {
@@ -51,21 +72,7 @@ func delete(db *badger.DB, key string) error {
 	return err
 }
 
-// Init opens and returns a badger database connection
-// don't forget to close it
-func Init(path string) (*badger.DB, error) {
-	db, err := badger.Open(badger.DefaultOptions(path))
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
-// Close closes the given badger database connection
-// (provided so you don't have to import badger just to do this)
-func Close(db *badger.DB) {
-	db.Close()
-}
+// == Domain Objects ========
 
 // MapStore badger implementation (see domain)
 type MapStore struct {
@@ -146,14 +153,19 @@ func (store MapStore) Delete(mapID string) error {
 
 // ChallengeStore badger implementation (see domain)
 type ChallengeStore struct {
-	DB *badger.DB
+	DB    *badger.DB
+	Index *IndexStore
 }
 
 const challengePrefix = "challenge-"
 
 // Insert a domain.Challenge into store's badger db
 func (store ChallengeStore) Insert(c domain.Challenge) error {
-	err := storeStruct(store.DB, challengePrefix+c.ChallengeID, c)
+	err := store.Index.append(c.MapID, c.ChallengeID)
+	if err != nil {
+		return fmt.Errorf("failed to add challenge to index: %v", err)
+	}
+	err = storeStruct(store.DB, challengePrefix+c.ChallengeID, c)
 	if err != nil {
 		return fmt.Errorf("failed to write challenge to badger DB: %v", err)
 	}
@@ -176,6 +188,29 @@ func (store ChallengeStore) Get(challengeID string) (domain.Challenge, error) {
 	return foundChallenge, nil
 }
 
+func (store ChallengeStore) Delete(challengeID string) error {
+	err := delete(store.DB, challengePrefix+challengeID)
+	if err != nil {
+		return fmt.Errorf("failed to delete challenge: %v", err)
+	}
+	return nil
+}
+
+// DeleteAll Challenge for a given mapID
+func (store ChallengeStore) DeleteAll(mapID string) error {
+	ind, err := store.Index.get(mapID)
+	if err != nil {
+		return fmt.Errorf("failed to get challenges index: %v", err)
+	}
+	for challengeID := range ind.ObjectIDs {
+		err := store.Delete(challengeID)
+		if err != nil {
+			return fmt.Errorf("failed to delete a challenge listed in the index: %v", err)
+		}
+	}
+	return nil
+}
+
 // note: no ChallengePlaceStore implementation,
 // because we just store the entire Challenge as a blob
 // one will probably be necessary for relational databases
@@ -183,14 +218,15 @@ func (store ChallengeStore) Get(challengeID string) (domain.Challenge, error) {
 
 // ChallengeResultStore badger implementation (see domain)
 type ChallengeResultStore struct {
-	DB *badger.DB
+	DB    *badger.DB
+	Index *IndexStore
 }
 
 const challengeResultPrefix = "result-"
 
 // Insert a domain.ChallengeResult into store's badger db
 func (store ChallengeResultStore) Insert(r domain.ChallengeResult) error {
-	err := store.appendToResultsIndex(r.ChallengeID, r.ChallengeResultID)
+	err := store.Index.append(r.ChallengeID, r.ChallengeResultID)
 	if err != nil {
 		return fmt.Errorf("failed to add challenge result to index: %v", err)
 	}
@@ -216,69 +252,44 @@ func (store ChallengeResultStore) Get(challengeResultID string) (domain.Challeng
 	return foundResult, nil
 }
 
-// resultsIndex allows this package to retrieve all ChallengeResult for a given
-// ChallengeID
-// TODO: I don't have a lot of K/V experience, is this the best solution?
-const resultsIndexKey = "challenge-%s-resultIDs"
-
-type resultsIndex struct {
-	ChallengeID        string
-	ChallengeResultIDs map[string]bool
+// GetAll ChallengeResult for a given challengeID
+func (store ChallengeResultStore) GetAll(challengeID string) ([]domain.ChallengeResult, error) {
+	ind, err := store.Index.get(challengeID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get results index: %v", err)
+	}
+	results := make([]domain.ChallengeResult, len(ind.ObjectIDs))
+	i := 0
+	for challengeResultID := range ind.ObjectIDs {
+		challengeResult, err := store.Get(challengeResultID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get a challenge result listed in the index: %v", err)
+		}
+		results[i] = challengeResult
+		i++
+	}
+	return results, nil
 }
 
-func (store ChallengeResultStore) insertResultsIndex(ind resultsIndex) error {
-	err := storeStruct(store.DB, fmt.Sprintf(resultsIndexKey, ind.ChallengeID), ind)
+func (store ChallengeResultStore) Delete(challengeResultID string) error {
+	err := delete(store.DB, challengeResultPrefix+challengeResultID)
 	if err != nil {
-		return fmt.Errorf("failed to write results index to badger DB: %v", err)
+		return fmt.Errorf("failed to delete challenge result: %v", err)
 	}
 	return nil
 }
 
-func (store ChallengeResultStore) getResultsIndex(challengeID string) (resultsIndex, error) {
-	var foundInd resultsIndex
-	indBytes, err := getBytes(store.DB, fmt.Sprintf(resultsIndexKey, challengeID))
-	if err != nil {
-		if errors.Is(err, badger.ErrKeyNotFound) {
-			// assume index hasn't been created for challengeID and return a new one
-			return resultsIndex{ChallengeID: challengeID, ChallengeResultIDs: make(map[string]bool)}, nil
-		}
-		return foundInd, fmt.Errorf("failed to retrieve existing results index from badger DB: %v", err)
-	}
-	err = gob.NewDecoder(bytes.NewBuffer(indBytes)).Decode(&foundInd)
-	if err != nil {
-		return foundInd, fmt.Errorf("failed to decode existing results index from bytes: %v", err)
-	}
-	return foundInd, nil
-}
-
-func (store ChallengeResultStore) appendToResultsIndex(challengeID string, challengeResultID string) error {
-	ind, err := store.getResultsIndex(challengeID)
+// DeleteAll ChallengeResult for a given challengeID
+func (store ChallengeResultStore) DeleteAll(challengeID string) error {
+	ind, err := store.Index.get(challengeID)
 	if err != nil {
 		return fmt.Errorf("failed to get results index: %v", err)
 	}
-
-	ind.ChallengeResultIDs[challengeResultID] = true
-
-	err = store.insertResultsIndex(ind)
-	if err != nil {
-		return fmt.Errorf("failed to insert modified results index: %v", err)
+	for challengeResultID := range ind.ObjectIDs {
+		err := store.Delete(challengeResultID)
+		if err != nil {
+			return fmt.Errorf("failed to delete a challenge result listed in the index: %v", err)
+		}
 	}
 	return nil
-}
-
-// GetAll ChallengeResult for a given challengeID
-func (store ChallengeResultStore) GetAll(challengeID string) ([]domain.ChallengeResult, error) {
-	results := make([]domain.ChallengeResult, 0)
-	ind, err := store.getResultsIndex(challengeID)
-	if err != nil {
-		return results, fmt.Errorf("failed to get results index: %v", err)
-	}
-	for challengeResultID := range ind.ChallengeResultIDs {
-		challengeResult, err := store.Get(challengeResultID)
-		if err != nil {
-			return results, fmt.Errorf("failed to get a challenge result listed in the index: %v", err)
-		}
-		results = append(results, challengeResult)
-	}
-	return results, nil
 }
