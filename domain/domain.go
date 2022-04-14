@@ -108,6 +108,10 @@ type Challenge struct {
 type ChallengeStore interface {
 	Insert(Challenge) error
 	Get(challengeID string) (Challenge, error)
+	GetList(mapID string) ([]string, error)
+	GetAll(mapID string) ([]Challenge, error)
+	Delete(challengeID string) error
+	DeleteAll(mapID string) error
 }
 
 // ChallengePlace is the location of a pano.
@@ -139,6 +143,8 @@ type ChallengeResultStore interface {
 	Insert(ChallengeResult) error
 	Get(challengeResultID string) (ChallengeResult, error)
 	GetAll(challengeID string) ([]ChallengeResult, error)
+	Delete(challengeResultID string) error
+	DeleteAll(challengeID string) error
 }
 
 // Guess is a guessed location for one pano in a Challenge.

@@ -10,7 +10,9 @@ import (
 )
 
 type Maps struct {
-	MapStore domain.MapStore
+	MapStore             domain.MapStore
+	ChallengeStore       domain.ChallengeStore
+	ChallengeResultStore domain.ChallengeResultStore
 }
 
 func (handler Maps) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -59,8 +61,7 @@ func (handler Maps) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			sendError(w, "missing map id", http.StatusBadRequest)
 			return
 		}
-		err := handler.MapStore.Delete(mapID)
-		// TODO: delete associated challenges etc. (maybe implement in Store layer?)
+		err := handler.deleteMap(mapID)
 		if err != nil {
 			sendError(w, "failed to delete map from store", http.StatusInternalServerError)
 			log.Printf("Failed to delete map from store: %v\n", err)
@@ -77,6 +78,26 @@ func (handler Maps) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		sendError(w, "api/maps endpoint does not exist.", http.StatusNotFound)
 	}
+}
+
+// TODO: consider a way of moving deletion chaining to the badgerdb package
+func (handler Maps) deleteMap(mapID string) error {
+	challengeIDs, err := handler.ChallengeStore.GetList(mapID)
+	if err != nil {
+		return fmt.Errorf("failed to get list of Challenge IDs: %v", err)
+	}
+	for _, challengeID := range challengeIDs {
+		err = handler.ChallengeResultStore.DeleteAll(challengeID)
+		if err != nil {
+			return fmt.Errorf("failed to delete ChallengeResult: %v", err)
+		}
+	}
+	err = handler.ChallengeStore.DeleteAll(mapID)
+	err = handler.MapStore.Delete(mapID)
+	if err != nil {
+		return fmt.Errorf("failed to delete Map: %v", err)
+	}
+	return nil
 }
 
 func mapFromRequest(r *http.Request) (domain.Map, error) {

@@ -71,11 +71,9 @@ func main() {
 	}()
 
 	indexStore := &badgerdb.IndexStore{DB: db}
-	mapStore := badgerdb.MapStore{DB: db}
+	mapStore := badgerdb.MapStore{DB: db, Index: indexStore}
 	challengeStore := badgerdb.ChallengeStore{DB: db, Index: indexStore}
-	challengeResultStore := badgerdb.ChallengeResultStore{
-		DB:    db,
-		Index: indexStore}
+	challengeResultStore := badgerdb.ChallengeResultStore{DB: db, Index: indexStore}
 
 	// == HANDLERS ========
 	// API
@@ -89,7 +87,9 @@ func main() {
 			Config: conf,
 		},
 		MapsHandler: api.Maps{
-			MapStore: mapStore,
+			MapStore:             mapStore,
+			ChallengeStore:       challengeStore,
+			ChallengeResultStore: challengeResultStore,
 		},
 		ChallengesHandler: api.Challenges{
 			ChallengeStore: challengeStore,
