@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"strconv"
 
 	"gitlab.com/glatteis/earthwalker/domain"
 )
@@ -13,6 +15,8 @@ type Maps struct {
 	MapStore             domain.MapStore
 	ChallengeStore       domain.ChallengeStore
 	ChallengeResultStore domain.ChallengeResultStore
+
+	MapDeleteHandler MapDelete
 }
 
 func (handler Maps) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -56,32 +60,75 @@ func (handler Maps) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		json.NewEncoder(w).Encode(newMap)
 	case http.MethodDelete:
-		mapID, _ := shiftPath(r.URL.Path)
-		if len(mapID) == 0 || mapID == "/" {
-			sendError(w, "missing map id", http.StatusBadRequest)
-			return
-		}
-		err := handler.deleteMap(mapID)
-		if err != nil {
-			sendError(w, "failed to delete map from store", http.StatusInternalServerError)
-			log.Printf("Failed to delete map from store: %v\n", err)
-			return
-		}
-		// TODO: FIXME: extremely awk success response
-		respJSON := "{\"data\": {\"message\": \"map with id: " + mapID + " deleted\"}}"
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, err = w.Write([]byte(respJSON))
-		if err != nil {
-			log.Printf("Error writing response: %v\n", err)
-		}
+		handler.MapDeleteHandler.ServeHTTP(w, r)
 	default:
 		sendError(w, "api/maps endpoint does not exist.", http.StatusNotFound)
 	}
 }
 
+type MapDelete struct {
+	Config domain.Config
+
+	MapStore             domain.MapStore
+	ChallengeStore       domain.ChallengeStore
+	ChallengeResultStore domain.ChallengeResultStore
+}
+
+const mapDeleteNet = "127.0.0.0/8"
+
+// TODO: generic local-only auth handler
+func (handler MapDelete) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	allowRemote, err := strconv.ParseBool(handler.Config.AllowRemoteMapDeletion)
+	if err != nil {
+		sendError(w, "unable to parse AllowRemoteMapDeletion config value.", http.StatusInternalServerError)
+		return
+	}
+	if !allowRemote {
+		ipStr, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			sendError(w, "unable to split host from port in client IP address.", http.StatusInternalServerError)
+			return
+		}
+		ip := net.ParseIP(ipStr)
+		fmt.Println(r.RemoteAddr)
+		fmt.Println(ip)
+		if ip == nil {
+			sendError(w, "unable to parse client IP address.", http.StatusInternalServerError)
+			return
+		}
+		_, allowedNet, err := net.ParseCIDR(mapDeleteNet)
+		if err != nil {
+			sendError(w, "unable to parse mapDeleteNet const.", http.StatusInternalServerError)
+			return
+		}
+		if !allowedNet.Contains(ip) {
+			sendError(w, "only local connections may delete Maps.", http.StatusUnauthorized)
+			return
+		}
+	}
+	mapID, _ := shiftPath(r.URL.Path)
+	if len(mapID) == 0 || mapID == "/" {
+		sendError(w, "missing map id", http.StatusBadRequest)
+		return
+	}
+	err = handler.deleteMap(mapID)
+	if err != nil {
+		sendError(w, "failed to delete map from store", http.StatusInternalServerError)
+		log.Printf("Failed to delete map from store: %v\n", err)
+		return
+	}
+	// TODO: FIXME: extremely awk success response
+	respJSON := "{\"data\": {\"message\": \"map with id: " + mapID + " deleted\"}}"
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write([]byte(respJSON))
+	if err != nil {
+		log.Printf("Error writing response: %v\n", err)
+	}
+}
+
 // TODO: consider a way of moving deletion chaining to the badgerdb package
-func (handler Maps) deleteMap(mapID string) error {
+func (handler MapDelete) deleteMap(mapID string) error {
 	challengeIDs, err := handler.ChallengeStore.GetList(mapID)
 	if err != nil {
 		return fmt.Errorf("failed to get list of Challenge IDs: %v", err)

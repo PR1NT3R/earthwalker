@@ -90,6 +90,12 @@ func main() {
 			MapStore:             mapStore,
 			ChallengeStore:       challengeStore,
 			ChallengeResultStore: challengeResultStore,
+			MapDeleteHandler: api.MapDelete{
+				Config:               conf,
+				MapStore:             mapStore,
+				ChallengeStore:       challengeStore,
+				ChallengeResultStore: challengeResultStore,
+			},
 		},
 		ChallengesHandler: api.Challenges{
 			ChallengeStore: challengeStore,

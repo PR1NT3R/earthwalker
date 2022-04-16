@@ -10,12 +10,13 @@ package domain
 
 // Config holds server-wide settings
 type Config struct {
-	ConfigPath           string
-	StaticPath           string
-	DBPath               string
-	Port                 string
-	TileServerURL        string
-	NoLabelTileServerURL string
+	ConfigPath             string
+	StaticPath             string
+	DBPath                 string
+	Port                   string
+	TileServerURL          string
+	NoLabelTileServerURL   string
+	AllowRemoteMapDeletion string
 }
 
 // == Domain Enums ========

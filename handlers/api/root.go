@@ -27,8 +27,7 @@ type Root struct {
 }
 
 func (handler Root) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("handling api request...")
-	log.Println(r.URL.Path)
+	log.Printf("%s requested %s %s", r.RemoteAddr, r.Method, r.URL.Path)
 	head, tail := shiftPath(r.URL.Path)
 	r.URL.Path = tail
 	switch head {
@@ -50,7 +49,7 @@ func (handler Root) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // sendError text as JSON
 func sendError(w http.ResponseWriter, text string, status int) {
-	respJSON := "{error: \"" + text + "\"}"
+	respJSON := "{\"error\": \"" + text + "\"}"
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, err := w.Write([]byte(respJSON))

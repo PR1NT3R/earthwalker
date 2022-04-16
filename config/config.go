@@ -17,12 +17,13 @@ func Read() (domain.Config, error) {
 	// defaults
 	appPath := AppPath()
 	conf := domain.Config{
-		ConfigPath:           getEnv("EARTHWALKER_CONFIG_PATH", appPath+"/config.toml"),
-		StaticPath:           appPath,
-		DBPath:               appPath + "/badger",
-		Port:                 "8080",
-		TileServerURL:        "https://mt.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}",
-		NoLabelTileServerURL: "https://mt.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}",
+		ConfigPath:             getEnv("EARTHWALKER_CONFIG_PATH", appPath+"/config.toml"),
+		StaticPath:             appPath,
+		DBPath:                 appPath + "/badger",
+		Port:                   "8080",
+		TileServerURL:          "https://mt.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}",
+		NoLabelTileServerURL:   "https://mt.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}",
+		AllowRemoteMapDeletion: "False",
 	}
 
 	// TOML
