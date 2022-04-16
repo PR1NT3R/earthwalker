@@ -31,6 +31,11 @@
         }
     });
 
+    const LOCAL_HOSTS = ["localhost", "127.0.0.1", ""] // not exhaustive
+    function isLocalHost() {
+        return LOCAL_HOSTS.includes(location.hostname)
+    }
+
     async function deleteSelf() {
         // TODO: ask for confirmation to delete
         let response = await $ewapi.deleteMap(map.MapID);
@@ -57,8 +62,10 @@
         <a href="/createchallenge?mapid={map.MapID}" class="btn btn-primary">
             Use Map
         </a>
-        <button class="btn btn-danger" on:click|preventDefault={deleteSelf}>
-            Delete
-        </button>
+        {#if isLocalHost()}
+            <button class="btn btn-danger" on:click|preventDefault={deleteSelf}>
+                Delete
+            </button>
+        {/if}
     </div>
 </div>
