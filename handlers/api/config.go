@@ -22,6 +22,8 @@ func (handler Config) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		respJSON = "{\"tileserver\": \"" + handler.Config.TileServerURL + "\"}"
 	case "nolabeltileserver":
 		respJSON = "{\"tileserver\": \"" + handler.Config.NoLabelTileServerURL + "\"}"
+	case "allowremotemapdeletion":
+		respJSON = "{\"allowremotemapdeletion\": \"" + handler.Config.AllowRemoteMapDeletion + "\"}"
 	default:
 		sendError(w, fmt.Sprintf("api/config endpoint '%s' does not exist.", r.URL.Path), http.StatusNotFound)
 		return

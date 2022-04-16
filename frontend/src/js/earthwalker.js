@@ -156,8 +156,8 @@ export function distString(meters) {
 // helpers
 
 // gets object from the given URL, else null
-export async function getObject(url) {
-    let response = await fetch(url);
+export async function getObject(url, ...fetchParams) {
+    let response = await fetch(url, ...fetchParams);
     if (response.ok) {
         return response.json();
     }
@@ -211,7 +211,11 @@ export class EarthwalkerAPI {
 
     // get tile server url (as object) from server, nolabel if specified
     getTileServer(labeled=true) {
-        return getObject(this.configURL + (labeled ? "/tileserver" : "/nolabeltileserver"))
+        return getObject(this.configURL + (labeled ? "/tileserver" : "/nolabeltileserver"));
+    }
+
+    async getRemoteMapDeletionAllowed() {
+        return await getObject(this.configURL + "/allowremotemapdeletion");
     }
 
     // get map object from server by id
