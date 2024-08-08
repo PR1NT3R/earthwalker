@@ -22,9 +22,6 @@ import * as GeoTIFF from 'geotiff';
 // It also means we can use StreetViewPreference.BEST without so many duplicate
 // responses.
 const PANO_SEARCH_RADIUS = 500;
-// NEAREST or BEST.  BEST seems to give more actual streetview results (rather
-// than third party photospheres) so I'm going with that.
-const SV_PREF = google.maps.StreetViewPreference.BEST;
 // discard polar panos, they're usually garbage
 const LAT_LIMIT = 85;
 // fetchPano will query the streetview API this many times before giving up
@@ -82,7 +79,9 @@ export async function fetchPano(svService, settings, popTIF, incrNumReqsCallback
         foundLatLng = await new Promise((resolve, reject) => {
             svService.getPanorama({
                 location: randomLatLng,
-                preference: SV_PREF,
+                // NEAREST or BEST.  BEST seems to give more actual streetview results (rather
+                // than third party photospheres) so I'm going with that.
+                preference: google.maps.StreetViewPreference.BEST,
                 radius: PANO_SEARCH_RADIUS,
                 source: source,
             }, (result, status) => {resolve(handlePanoResponse(result, status));});
