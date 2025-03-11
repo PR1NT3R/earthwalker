@@ -11,6 +11,7 @@
     // TODO: this duplicates a function in CreateChallenge.
     //       consider consolidating.
     async function handleFormSubmit() {
+        nickname = nickname.substring(0,20);
         $globalResult = await $ewapi.getResult(await submitNewChallengeResult());
         // set the generated challenge as the current challenge
         document.cookie = challengeCookieName + "=" + $globalChallenge.ChallengeID + ";path=/;max-age=172800";

@@ -85,6 +85,7 @@
     }
 
     async function handleFormSubmit() {
+        nickname = nickname.substring(0,20);
         // TODO: duplicates code in Join
         let challengeResultID = await submitNewChallengeResult();
         $globalResult = await $ewapi.getResult(challengeResultID);
