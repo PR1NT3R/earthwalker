@@ -8,6 +8,8 @@
 >
 > After randomly discovering this project and started to like it very much, I decided to fork it to continue development on my own local **Gitea** instance. My goal is to keep the project alive and contribute improvements, while respecting the original vision of the developers. I will occasionally sync this fork with the GitHub repository to keep it updated.
 >
+>This fork might end up being abandoned, as I cannot guarantee consistent maintenance or development. I will try my best to make improvements and keep things synced, but please manage your expectations.
+>
 > I will make every effort to respect the original licensing terms of this project, which is under the **GNU General Public License v3** (GPL-3.0).
 >
 > If you're interested in contributing or collaborating, feel free to reach out!
