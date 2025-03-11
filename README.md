@@ -6,7 +6,7 @@
 > - [GitHub (daehli/earthwalker)](https://github.com/daehli/earthwalker) – Seems to be inactive, with no recent updates.
 > - [GitLab (glatteis/earthwalker)](https://gitlab.com/glatteis/earthwalker) – The latest version, but still hasn't been updated in a while.
 >
-> After randomly discovering this project and started to like it very much, I decided to fork it to continue development on my own local **Gitea** instance. My goal is to keep the project alive and contribute improvements, while respecting the original vision of the developers. I will occasionally sync this fork with the GitHub repository to keep it updated.
+> After randomly discovering this project and started to like it very much, I decided to fork it to continue development. This fork will exist both here and my local gitea instance where most of the changes will occur, I'll try to keep this fork updated with my gitea instance
 >
 >This fork might end up being abandoned, as I cannot guarantee consistent maintenance or development. I will try my best to make improvements and keep things synced, but please manage your expectations.
 >
