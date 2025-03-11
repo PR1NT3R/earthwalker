@@ -1,3 +1,21 @@
+> [!WARNING]
+> **NOT THE ORIGINAL PROJECT BUT A FORK**
+>
+> I've noticed this project on two platforms:
+> 
+> - [GitHub (daehli/earthwalker)](https://github.com/daehli/earthwalker) – Seems to be inactive, with no recent updates.
+> - [GitLab (glatteis/earthwalker)](https://gitlab.com/glatteis/earthwalker) – The latest version, but still hasn't been updated in a while.
+>
+> After randomly discovering this project and started to like it very much, I decided to fork it to continue development. This fork will exist both here and my local gitea instance where most of the changes will occur, I'll try to keep this fork synced with my gitea instance.
+>
+>This fork might end up being abandoned, as I cannot guarantee consistent maintenance or development. I will try my best to make improvements and keep things synced, but please manage your expectations.
+>
+> I will make every effort to respect the original licensing terms of this project, which is under the **GNU General Public License v3** (GPL-3.0).
+>
+> If you're interested in contributing or collaborating, feel free to reach out!
+>
+> **\\/ ORIGINAL README.md BELOW \\/**
+
 # Earthwalker
 
 Earthwalker is a game of a similar concept to [GeoGuessr](https://geoguessr.com).
