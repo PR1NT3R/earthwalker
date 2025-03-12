@@ -156,8 +156,8 @@ export function distString(meters) {
 // helpers
 
 // gets object from the given URL, else null
-export async function getObject(url) {
-    let response = await fetch(url);
+export async function getObject(url, ...fetchParams) {
+    let response = await fetch(url, ...fetchParams);
     if (response.ok) {
         return response.json();
     }
@@ -183,6 +183,17 @@ export async function postObject(url, object) {
     return {}
 }
 
+export async function deleteObject(url) {
+    let response = await fetch(url, {method: "DELETE"});
+    if (response.ok) {
+        console.log(response);
+        return response.json();
+    }
+    // non-null return signals fetch completion
+    // TODO: better way?
+    return {}
+}
+
 export function orderRounds(arrWithRoundNums) {
     return arrWithRoundNums.sort((a, b) => a.RoundNum - b.RoundNum);
 }
@@ -200,7 +211,15 @@ export class EarthwalkerAPI {
 
     // get tile server url (as object) from server, nolabel if specified
     getTileServer(labeled=true) {
-        return getObject(this.configURL + (labeled ? "/tileserver" : "/nolabeltileserver"))
+        return getObject(this.configURL + (labeled ? "/tileserver" : "/nolabeltileserver"));
+    }
+
+    async getRemoteMapDeletionAllowed() {
+        return await getObject(this.configURL + "/allowremotemapdeletion");
+    }
+
+    async getRemoteMapCreationAllowed() {
+        return await getObject(this.configURL + "/allowremotemapcreation")
     }
 
     // get map object from server by id
@@ -216,6 +235,10 @@ export class EarthwalkerAPI {
     // post new map object to server
     postMap(map) {
         return postObject(this.mapsURL, map);
+    }
+
+    deleteMap(mapID) {
+        return deleteObject(this.mapsURL+"/"+mapID);
     }
 
     async getChallenge(challengeID) {

@@ -1,7 +1,9 @@
 <script>
-    import { onMount } from "svelte";
+    import { onMount, createEventDispatcher } from "svelte";
     import { ewapi } from "../../js/stores";
     import { showPolygonOnMap } from '../../js/earthwalker';
+
+    const dispatch = createEventDispatcher();
 
     export let map;
 
@@ -27,6 +29,32 @@
             lMap.fitBounds(polyGroup.getBounds());
         }
     });
+
+    const LOCAL_HOSTS = ["localhost", "127.0.0.1", "192.168.0.127"] // not exhaustive
+    function isLocalHost() {
+        console.log(LOCAL_HOSTS.includes(location.hostname));
+        return LOCAL_HOSTS.includes(location.hostname)
+    }
+
+    async function remoteMapDeletionAllowed() {
+        let allowedStr = (await $ewapi.getRemoteMapDeletionAllowed()).allowremotemapdeletion;
+        console.log(JSON.parse(allowedStr.toLowerCase()));
+        return JSON.parse(allowedStr.toLowerCase())
+    }
+
+    async function remoteMapCreationAllowed() {
+        let allowedStr = (await $ewapi.getRemoteMapCreationAllowed()).allowremotemapcreation;
+        console.log(JSON.parse(allowedStr.toLowerCase()));
+        return JSON.parse(allowedStr.toLowerCase())
+    }
+
+    async function deleteSelf() {
+        if (confirm("Are you sure? This action is PERNAMENT.")) {
+            let response = await $ewapi.deleteMap(map.MapID);
+            console.log(response);
+            dispatch("requestReload");
+        }
+    }
 </script>
 
 <div class="card mt-4 mx-1">
@@ -38,9 +66,21 @@
     <div class="card-body">
         <h5 class="card-title">{map.Name}</h5>
         <p class="card-text">
-            Rounds: {map.NumRounds}<br>
-            {map.TimeLimit > 0 ? `Time limit: ${Math.floor(map.TimeLimit / 60)}:${Math.floor(map.TimeLimit % 60).toString().padStart(2, '0')}` : 'No Time Limit'}<br>
+            Rounds: {map.NumRounds}
+            <br>
+            {map.TimeLimit > 0 ? `Time limit: ${Math.floor(map.TimeLimit / 60)}:${Math.floor(map.TimeLimit % 60).toString().padStart(2, '0')}` : 'No Time Limit'}
         </p>
-        <a href="/createchallenge?mapid={map.MapID}" class="btn btn-primary">Use Map</a>
+    </div>
+    <div class="card-footer">
+        <a href="/createchallenge?mapid={map.MapID}" class="btn btn-primary">
+            Use Map
+        </a>
+        {#await remoteMapDeletionAllowed() then remoteDeletionAllowed}
+            {#if isLocalHost() || remoteDeletionAllowed}
+                <button class="btn btn-danger" on:click|preventDefault={deleteSelf}>
+                    Delete
+                </button>
+            {/if}
+        {/await}
     </div>
 </div>

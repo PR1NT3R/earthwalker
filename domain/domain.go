@@ -10,12 +10,14 @@ package domain
 
 // Config holds server-wide settings
 type Config struct {
-	ConfigPath           string
-	StaticPath           string
-	DBPath               string
-	Port                 string
-	TileServerURL        string
-	NoLabelTileServerURL string
+	ConfigPath             string
+	StaticPath             string
+	DBPath                 string
+	Port                   string
+	TileServerURL          string
+	NoLabelTileServerURL   string
+	AllowRemoteMapDeletion string
+	AllowRemoteMapCreation string
 }
 
 // == Domain Enums ========
@@ -81,7 +83,9 @@ type Map struct {
 	Connectedness PanoConnectedness
 	Copyright     PanoCopyright
 	Source        PanoSource
-	ShowLabels    bool // whether to display place labels on the in-game minimap
+	ShowLabels    bool                     // whether to display place labels on the in-game minimap
+	LocStrings    []string                 // location string entered by user (to draw polygons)
+	DrawnPolygons []map[string]interface{} // geoJSON draw by user
 	// TODO: consider adding CreatedAt (datetime) field
 }
 
@@ -91,6 +95,7 @@ type MapStore interface {
 	Insert(Map) error
 	Get(mapID string) (Map, error)
 	GetAll() ([]Map, error)
+	Delete(mapID string) error
 }
 
 // Challenge is a list of coordinates of panos.
@@ -105,6 +110,10 @@ type Challenge struct {
 type ChallengeStore interface {
 	Insert(Challenge) error
 	Get(challengeID string) (Challenge, error)
+	GetList(mapID string) ([]string, error)
+	GetAll(mapID string) ([]Challenge, error)
+	Delete(challengeID string) error
+	DeleteAll(mapID string) error
 }
 
 // ChallengePlace is the location of a pano.
@@ -136,6 +145,8 @@ type ChallengeResultStore interface {
 	Insert(ChallengeResult) error
 	Get(challengeResultID string) (ChallengeResult, error)
 	GetAll(challengeID string) ([]ChallengeResult, error)
+	Delete(challengeResultID string) error
+	DeleteAll(challengeID string) error
 }
 
 // Guess is a guessed location for one pano in a Challenge.

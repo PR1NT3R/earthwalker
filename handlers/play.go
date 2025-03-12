@@ -115,7 +115,7 @@ func (handler Play) modifyMainPage(target string, w http.ResponseWriter, r *http
 	w.Write([]byte(filterUrls(replacedBody)))
 }
 
-func modifyInformation(target string, w http.ResponseWriter, r *http.Request, doFilterUrls bool) {
+func modifyInformation(target string, w http.ResponseWriter, r *http.Request) {
 	req, err := http.NewRequest("GET", target, nil)
 	req.Header.Add("User-Agent", r.Header.Get("User-Agent"))
 	req.Header.Add("Accept", r.Header.Get("Accept"))
@@ -140,7 +140,7 @@ func modifyInformation(target string, w http.ResponseWriter, r *http.Request, do
 
 	if strings.Contains(target, "photometa") {
 		body = []byte(filterPhotometa(string(body)))
-	} else if doFilterUrls {
+	} else {
 		body = []byte(filterUrls(string(body)))
 	}
 
@@ -157,7 +157,7 @@ func floatToString(number float64) string {
 // buildURL builds google street view urls from coordinates
 func buildURL(location domain.Coords) string {
 
-	template := "https://www.google.com/maps/@%f,%f,3a,90y,0h,90t/data=!3m7!1e1!3m5!1s%s!2e0!3e11!7i13312!8i6656?hl=en&entry=ttu"
+	template := "https://www.google.com/maps/@%f,%f,3a,90y,0h,90t/data=!3m7!1e1!3m5!1s%s!2e0!3e11!7i3512!8i894?hl=en"
 	return fmt.Sprintf(template, location.Lat, location.Lng, location.PanoID)
 
 	// 	baseURL, err := url.Parse("https://www.google.com/maps")
@@ -181,24 +181,14 @@ func buildURL(location domain.Coords) string {
 // ServeLocation serves a specific location to the user.
 func (handler Play) ServeLocation(l domain.Coords, w http.ResponseWriter, r *http.Request) {
 	mapsURL := buildURL(l)
-	println(mapsURL)
 	handler.modifyMainPage(mapsURL, w, r)
 }
 
-// ServeGoogleFiltered is a proxy to google that filters URLs
-func ServeGoogleFiltered(w http.ResponseWriter, r *http.Request) {
-	fullURL := r.URL
-	fullURL.Host = "www.google.com"
-	fullURL.Scheme = "https"
-
-	modifyInformation(fullURL.String(), w, r, true)
-}
-
-// ServeGoogle is a proxy to google that does not filter URLs
+// ServeGoogle is a proxy to google
 func ServeGoogle(w http.ResponseWriter, r *http.Request) {
 	fullURL := r.URL
 	fullURL.Host = "www.google.com"
 	fullURL.Scheme = "https"
 
-	modifyInformation(fullURL.String(), w, r, false)
+	modifyInformation(fullURL.String(), w, r)
 }

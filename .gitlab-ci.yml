@@ -10,7 +10,7 @@ test:
     - apk add --no-cache make go
     - go fmt $(go list ./...)
     - go vet $(go list ./...)
-    - go install github.com/jstemmer/go-junit-report/v2@latest
+    - go get -u github.com/jstemmer/go-junit-report
     - export PATH=$PATH:$(go env GOPATH)/bin
     - go test ./... -v 2>&1 | go-junit-report -set-exit-code > report.xml
   artifacts:

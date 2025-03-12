@@ -23,6 +23,8 @@ func Read() (domain.Config, error) {
 		Port:                 "8080",
 		TileServerURL:        "https://mt.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}",
 		NoLabelTileServerURL: "https://mt.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}",
+		AllowRemoteMapDeletion: "True",
+		AllowRemoteMapCreation: "True",
 	}
 
 	// TOML

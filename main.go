@@ -70,9 +70,10 @@ func main() {
 		os.Exit(0)
 	}()
 
-	mapStore := badgerdb.MapStore{DB: db}
-	challengeStore := badgerdb.ChallengeStore{DB: db}
-	challengeResultStore := badgerdb.ChallengeResultStore{DB: db}
+	indexStore := &badgerdb.IndexStore{DB: db}
+	mapStore := badgerdb.MapStore{DB: db, Index: indexStore}
+	challengeStore := badgerdb.ChallengeStore{DB: db, Index: indexStore}
+	challengeResultStore := badgerdb.ChallengeResultStore{DB: db, Index: indexStore}
 
 	// == HANDLERS ========
 	// API
@@ -86,7 +87,15 @@ func main() {
 			Config: conf,
 		},
 		MapsHandler: api.Maps{
-			MapStore: mapStore,
+			MapStore:             mapStore,
+			ChallengeStore:       challengeStore,
+			ChallengeResultStore: challengeResultStore,
+			MapDeleteHandler: api.MapDelete{
+				Config:               conf,
+				MapStore:             mapStore,
+				ChallengeStore:       challengeStore,
+				ChallengeResultStore: challengeResultStore,
+			},
 		},
 		ChallengesHandler: api.Challenges{
 			ChallengeStore: challengeStore,
@@ -106,10 +115,7 @@ func main() {
 		ChallengeResultStore: challengeResultStore,
 		Config:               conf,
 	})
-	http.HandleFunc("/maps/", handlers.ServeGoogleFiltered)
-	http.HandleFunc("/maps-api-v3/", handlers.ServeGoogleFiltered)
-	http.HandleFunc("/gen_204/", handlers.ServeGoogleFiltered)
-	http.HandleFunc("/xjs/", handlers.ServeGoogleFiltered)
+	http.HandleFunc("/maps/", handlers.ServeGoogle)
 	// Otherwise, just serve index.html and let the frontend deal with the consequences
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, conf.StaticPath+"/public/index.html")
