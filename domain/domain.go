@@ -18,6 +18,8 @@ type Config struct {
 	NoLabelTileServerURL   string
 	AllowRemoteMapDeletion string
 	AllowRemoteMapCreation string
+	IsBehindProxy          string
+	AllowedIPs             []string
 }
 
 // == Domain Enums ========

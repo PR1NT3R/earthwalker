@@ -78,46 +78,63 @@ const mapDeleteNet = "127.0.0.0/8"
 
 // TODO: generic local-only auth handler
 func (handler MapDelete) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Check if remote map deletion is allowed from the config
 	allowRemote, err := strconv.ParseBool(handler.Config.AllowRemoteMapDeletion)
 	if err != nil {
 		sendError(w, "unable to parse AllowRemoteMapDeletion config value.", http.StatusInternalServerError)
 		return
 	}
+
+	// If remote map deletion is not allowed, proceed with the IP validation
 	if !allowRemote {
-		ipStr, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			sendError(w, "unable to split host from port in client IP address.", http.StatusInternalServerError)
-			return
+		// If the server is behind a proxy, check the X-Forwarded-For header for the real IP
+		var clientIP string
+		if handler.Config.IsBehindProxy == "True" {
+			clientIP = r.Header.Get("X-Forwarded-For")
+			if clientIP == "" {
+				clientIP = r.RemoteAddr // Fall back to RemoteAddr if header is not present
+			}
+		} else {
+			// If not behind a proxy, use the remote address directly
+			clientIP, _, err = net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				sendError(w, "unable to split host from port in client IP address.", http.StatusInternalServerError)
+				return
+			}
 		}
-		ip := net.ParseIP(ipStr)
-		fmt.Println(r.RemoteAddr)
-		fmt.Println(ip)
-		if ip == nil {
-			sendError(w, "unable to parse client IP address.", http.StatusInternalServerError)
-			return
+
+		// Check if the client's IP is in the AllowedIPs list
+		allowed := false
+		for _, allowedIP := range handler.Config.AllowedIPs {
+			if clientIP == allowedIP {
+				allowed = true
+				break
+			}
 		}
-		_, allowedNet, err := net.ParseCIDR(mapDeleteNet)
-		if err != nil {
-			sendError(w, "unable to parse mapDeleteNet const.", http.StatusInternalServerError)
-			return
-		}
-		if !allowedNet.Contains(ip) {
-			sendError(w, "only local connections may delete Maps.", http.StatusUnauthorized)
+
+		// If the IP is not allowed, return an Unauthorized error
+		if !allowed {
+			sendError(w, "you are not authorized to delete maps from this server.", http.StatusUnauthorized)
 			return
 		}
 	}
+
+	// Extract the mapID from the URL path
 	mapID, _ := shiftPath(r.URL.Path)
 	if len(mapID) == 0 || mapID == "/" {
 		sendError(w, "missing map id", http.StatusBadRequest)
 		return
 	}
+
+	// Proceed with deleting the map if everything is valid
 	err = handler.deleteMap(mapID)
 	if err != nil {
 		sendError(w, "failed to delete map from store", http.StatusInternalServerError)
 		log.Printf("Failed to delete map from store: %v\n", err)
 		return
 	}
-	// TODO: FIXME: extremely awk success response
+
+	// Send a successful response after map deletion
 	respJSON := "{\"data\": {\"message\": \"map with id: " + mapID + " deleted\"}}"
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

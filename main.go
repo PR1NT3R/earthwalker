@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+	"encoding/json"
 
 	"gitlab.com/glatteis/earthwalker/handlers"
 
@@ -116,12 +117,35 @@ func main() {
 		Config:               conf,
 	})
 	http.HandleFunc("/maps/", handlers.ServeGoogle)
+
+	http.HandleFunc("/api/my-ip", func(w http.ResponseWriter, r *http.Request) {
+		userIP := r.Header.Get("X-Forwarded-For")
+		if userIP == "" {
+			userIP = r.RemoteAddr
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"ip": "` + userIP + `"}`))
+	})
+
+	http.HandleFunc("/api/allowed-ips", func(w http.ResponseWriter, r *http.Request) {
+		// Assuming conf is your configuration that holds AllowedIPs
+		allowedIps := conf.AllowedIPs
+	
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(allowedIps)
+	})
+
 	// Otherwise, just serve index.html and let the frontend deal with the consequences
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, conf.StaticPath+"/public/index.html")
 	})
-
+	
 	// == ENGAGE ========
 	log.Println("earthwalker is running on ", port)
+	log.Println(conf)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Println(conf)
 }
