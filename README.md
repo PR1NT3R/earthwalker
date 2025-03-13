@@ -15,6 +15,9 @@
 > **CHANGES:**
 > - Fixed the original branch from gitlab for map deletion (the guess menu in the game part of this project just simply din't show at all when I tried it)
 > - Added a 20-character nickname limit to avoid my friend's ridiculously long usernames pushing the UI off-screen.
+> - Added remote map creation config
+> - Added is behind proxy config to eaisly modify the ip getting logic for remote map creation/deletion config
+> - Moved the ip's to check when remote map deletion is disabled to be configurable within config and not having to search throu every file.
 >
 > **\\/ ORIGINAL README.md BELOW \\/**
 
