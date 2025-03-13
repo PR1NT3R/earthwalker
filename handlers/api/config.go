@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"gitlab.com/glatteis/earthwalker/domain"
 )
@@ -25,7 +26,11 @@ func (handler Config) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "allowremotemapdeletion":
 		respJSON = "{\"allowremotemapdeletion\": \"" + handler.Config.AllowRemoteMapDeletion + "\"}"
 	case "allowremotemapcreation":
-		respJSON = "{\"allowremotemapcreation\": \"" + handler.Config.AllowRemoteMapCreation + "\"}"
+		respJSON = "{\"allowremotemapcreation\": \"" + handler.Config.AllowRemoteMapCreation + "\"}"	
+	case "isbehindproxy":
+		respJSON = "{\"isbehindproxy\": \"" + handler.Config.IsBehindProxy + "\"}"	
+	case "allowedips":
+		respJSON = "{\"allowedips\": \"" + strings.Join(handler.Config.AllowedIPs, ",") + "\"}"
 	default:
 		sendError(w, fmt.Sprintf("api/config endpoint '%s' does not exist.", r.URL.Path), http.StatusNotFound)
 		return
