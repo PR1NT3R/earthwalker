@@ -13,7 +13,7 @@
 > If you're interested in contributing or collaborating, feel free to reach out!
 >
 > **CHANGES:**
-> - Fixed the original branch from gitlab for map deletion (the guess menu in the game part of this project just simply din't show at all when I tried it)
+> - Fixed the original branch from gitlab for map deletion (the guess menu in the game part of this project just simply didn't show at all when I tried it)
 > - Added a 20-character nickname limit to avoid my friend's ridiculously long usernames pushing the UI off-screen.
 > - Added remote map creation config
 > - Added is behind proxy config to eaisly modify the ip getting logic for remote map creation/deletion config
